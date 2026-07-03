@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY";
 const ELEVENLABS_API_KEY = sk_e622978d3d67336a71693188af8fa1214e81ebc036fa0b10;
-const ELEVENLABS_VOICE_ID = https://elevenlabs.io/app/agents/voice-library?voiceId=19STyYD15bswVz51nqLf; 
+const ELEVENLABS_VOICE_ID = "https://elevenlabs.io/app/agents/voice-library?voiceId=19STyYD15bswVz51nqLf; "
 
 // --- UI ELEMENT TARGETING ---
 const manufacturerInput = document.querySelector('input[placeholder="LAMBORGHINI"]') || document.querySelector('input');
