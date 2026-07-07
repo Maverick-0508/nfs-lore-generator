@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { GoogleGenAI } = require('@google/genai');
+// const { GoogleGenAI } = require('@google/genai'); // Not used with AQ token
 
 dotenv.config();
 
@@ -11,7 +11,9 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // Initialize official Google Gen AI SDK Client
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize Gemini via direct HTTP call using Bearer token (AQ token)
+// Using built-in fetch (Node >=18)
+const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 app.post('/api/generate-dispatch', async (req, res) => {
   try {
@@ -24,12 +26,29 @@ app.post('/api/generate-dispatch', async (req, res) => {
     // 1. Generate text logs using Gemini 2.5 Flash (Free Tier)
     let scriptText;
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Write a dramatic, 60-word SCPD police dispatch log for a ${year || ''} ${make} ${model || ''} suspected of high-speed street racing in Seacrest County. Start with 'All units' or 'Dispatch to active units'. Use tactical racing game terminology.`,
-        config: { temperature: 0.85 }
-      });
-      scriptText = response.text;
+      const geminiPayload = {
+          contents: [{
+            role: 'user',
+            parts: [{ text: `Write a dramatic, 60-word SCPD police dispatch log for a ${year || ''} ${make} ${model || ''} suspected of high-speed street racing in Seacrest County. Start with 'All units' or 'Dispatch to active units'. Use tactical racing game terminology.` }]
+          }],
+          generationConfig: { temperature: 0.85 }
+        };
+        const geminiResp = await fetch(GEMINI_ENDPOINT, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
+          },
+          body: JSON.stringify(geminiPayload)
+        });
+        if (!geminiResp.ok) {
+          const err = await geminiResp.text();
+          console.error('Gemini API Error:', err);
+          return res.status(500).json({ error: 'Gemini Failure: ' + err });
+        }
+        const geminiData = await geminiResp.json();
+        scriptText = geminiData.candidates && geminiData.candidates[0] && geminiData.candidates[0].content && geminiData.candidates[0].content.parts[0].text ?
+          geminiData.candidates[0].content.parts[0].text : '';
     } catch (geminiErr) {
       console.error('Gemini API Error:', geminiErr.message);
       return res.status(500).json({ error: `Gemini Failure: ${geminiErr.message}` });
