@@ -16,6 +16,7 @@ app.use(express.static(__dirname));
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 app.post('/api/generate-dispatch', async (req, res) => {
+  console.log('Incoming request body:', req.body);
   try {
     const { make, model, year } = req.body;
 
@@ -33,10 +34,13 @@ app.post('/api/generate-dispatch', async (req, res) => {
           }],
           generationConfig: { temperature: 0.85 }
         };
-        const url = `${GEMINI_ENDPOINT}?key=${process.env.GEMINI_API_KEY}`;
+        const url = GEMINI_ENDPOINT;
         const geminiResp = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
+          },
           body: JSON.stringify(geminiPayload)
         });
         if (!geminiResp.ok) {
@@ -88,6 +92,14 @@ app.post('/api/generate-dispatch', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const path = require('path');
+
+// Serve the main dashboard page at the root URL
+app.get('/', (req, res) => {
+  const dashboardPath = path.join(__dirname, 'dashboard.html');
+  res.sendFile(dashboardPath);
+});
+
 app.listen(PORT, () => {
   console.log(`[SCPD SYSTEM RUNNING]: Active via http://localhost:${PORT}`);
 });
