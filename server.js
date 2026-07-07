@@ -33,12 +33,10 @@ app.post('/api/generate-dispatch', async (req, res) => {
           }],
           generationConfig: { temperature: 0.85 }
         };
-        const geminiResp = await fetch(GEMINI_ENDPOINT, {
+        const url = `${GEMINI_ENDPOINT}?key=${process.env.GEMINI_API_KEY}`;
+        const geminiResp = await fetch(url, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.GEMINI_API_KEY}`
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(geminiPayload)
         });
         if (!geminiResp.ok) {
