@@ -663,33 +663,7 @@
                 });
             });
 
-            // Main Deployment Button Click
-            const deployBtn = document.getElementById('main-deploy-btn');
-            const deployForm = document.getElementById('deployment-form');
-
-            if (deployForm) {
-                deployForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    deployBtn.classList.add('btn-loading');
-                    const originalText = deployBtn.querySelector('span').innerText;
-                    deployBtn.querySelector('span').innerText = 'SYNCHRONIZING...';
-
-                    setTimeout(() => {
-                        deployBtn.querySelector('span').innerHTML = '<span class="busted-glow">ASSET DEPLOYED</span>';
-                        deployBtn.classList.remove('btn-loading');
-                        deployBtn.style.borderColor = '#ff5252';
-                        deployBtn.style.color = '#ff5252';
-
-                        // Reset after 3 seconds
-                        setTimeout(() => {
-                            deployBtn.querySelector('span').innerText = originalText;
-                            deployBtn.style.borderColor = '';
-                            deployBtn.style.color = '';
-                        }, 3000);
-                    }, 2000);
-                });
-            }
-
+            // Main Deployment logic is handled in app.js
             // --- Tab Selection Logic ---
             const tabs = document.querySelectorAll('.segment-tabs .tab-item');
             tabs.forEach(tab => {

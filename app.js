@@ -1,53 +1,73 @@
 // --- CONFIGURATION ---
-// Keys are safely moved to the server side system configuration mappings.
 const SERVER_URL = "http://localhost:3000/api/generate-dispatch";
 
 // --- UI ELEMENT TARGETING ---
-const manufacturerInput = document.querySelector('input[placeholder="LAMBORGHINI"]') || document.querySelector('input');
-const modelInput = document.getElementById('unit-model') || document.querySelectorAll('input')[1];
-const yearInput = document.getElementById('fleet-year') || document.querySelectorAll('input')[2];
-const takedownBtn = document.querySelector('button') || document.getElementById('initiate-takedown');
-const transcriptBox = document.querySelector('.font-serif') || document.querySelector('blockquote');
+const manufacturerInput = document.querySelectorAll('input')[0];
+const modelInput = document.querySelectorAll('input')[1];
+const yearInput = document.querySelectorAll('input')[2];
+const transcriptBox = document.querySelector('blockquote');
+const deployForm = document.getElementById('deployment-form');
+const deployBtn = document.getElementById('main-deploy-btn');
 
 // --- EVENT LISTENER ---
-takedownBtn.addEventListener('click', async () => {
-    const make = manufacturerInput.value || "Unknown Vehicle";
-    const model = modelInput ? modelInput.value : "";
-    const year = yearInput ? yearInput.value : "";
+if (deployForm) {
+    deployForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    takedownBtn.innerText = "PROCESSING TRANSMISSION...";
-    takedownBtn.disabled = true;
+        const make = manufacturerInput ? manufacturerInput.value : "Unknown Vehicle";
+        const model = modelInput ? modelInput.value : "";
+        const year = yearInput ? yearInput.value : "";
 
-    try {
-        // 1. Fetch Text and Audio from local backend
-        const response = await fetch(SERVER_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ make, model, year })
-        });
+        // UI Loading State
+        deployBtn.classList.add('btn-loading');
+        const spanEl = deployBtn.querySelector('span');
+        const originalText = spanEl ? spanEl.innerText : 'Initialize Deployment';
+        if (spanEl) spanEl.innerText = 'SYNCHRONIZING...';
 
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error || "Server error");
+        try {
+            // 1. Fetch Text and Audio from local backend
+            const response = await fetch(SERVER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ make, model, year })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Server error");
+            }
+
+            const data = await response.json();
+            const scriptText = data.script;
+
+            // Dynamically update text box on screen
+            if (transcriptBox) transcriptBox.innerText = `"${scriptText}"`;
+
+            // Play the Audio
+            const audio = new Audio(data.audio);
+            audio.play();
+
+            // UI Success State
+            if (spanEl) spanEl.innerHTML = '<span class="busted-glow">ASSET DEPLOYED</span>';
+            deployBtn.classList.remove('btn-loading');
+            deployBtn.style.borderColor = '#ff5252';
+            deployBtn.style.color = '#ff5252';
+
+        } catch (error) {
+            console.error(error);
+            alert("Communication error. Check console logs: " + error.message);
+            if (spanEl) spanEl.innerText = 'ERROR';
+            deployBtn.classList.remove('btn-loading');
+        } finally {
+            // Reset after 3 seconds
+            setTimeout(() => {
+                if (spanEl) spanEl.innerText = originalText;
+                deployBtn.style.borderColor = '';
+                deployBtn.style.color = '';
+                deployBtn.classList.remove('btn-loading');
+            }, 3000);
         }
-
-        const data = await response.json();
-        const scriptText = data.script;
-
-        // Dynamically update text box on screen
-        if (transcriptBox) transcriptBox.innerText = `"${scriptText}"`;
-
-        // Play the Audio
-        const audio = new Audio(data.audio);
-        audio.play();
-
-    } catch (error) {
-        console.error(error);
-        alert("Communication error. Check console logs.");
-    } finally {
-        takedownBtn.innerText = "INITIATE TAKEDOWN";
-        takedownBtn.disabled = false;
-    }
-});
+    });
+}
